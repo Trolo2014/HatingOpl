@@ -65,14 +65,14 @@ def get_presence(user_ids):
                     if previous_state[user_id] != current_state:
                         message = (
                             f"**Username:** {username} (User ID: {user_id})\n"
-                            f"**Presence Type:** {current_state}\n"
+                            f"**Is ** {current_state}\n"
                         )
                         send_to_discord(message)
                 else:
                     if presence_type != 0:  # Only notify if not offline
                         message = (
                             f"**Username:** {username} (User ID: {user_id})\n"
-                            f"**Presence Type:** {current_state}\n"
+                            f"**Is ** {current_state}\n"
                         )
                         send_to_discord(message)
 
