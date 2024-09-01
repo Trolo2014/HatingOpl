@@ -4,7 +4,7 @@ import json
 
 WEBHOOK_URL = "https://discord.com/api/webhooks/1116120565955182722/jCrzUqFdd29XD_xMzqIFfgHImP_coEi4TzsQEgCjFXx2F5ReW-xiBR2Q5sbOPf9EPZUm"
 USER_IDS = [3078804436 , 520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs
-PLACE_ID = "1234567890"  # Replace with actual place ID
+PLACE_ID = "3237168"  # Replace with actual place ID
 PREVIOUS_STATE = {}
 
 # Function to get presence data
