@@ -139,4 +139,4 @@ if __name__ == "__main__":
     user_ids = [3078804436,520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs as needed
     while True:
         get_presence(user_ids)
-        time.sleep(30)  # Check every 30 seconds
+        time.sleep(5)  # Check every 5 seconds
