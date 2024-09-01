@@ -18,10 +18,10 @@ def send_to_discord(content, embed=None):
         response = requests.post(WEBHOOK_URL, json=data)
         if response.status_code == 204:
             print("Successfully sent to Discord.")
-        elif response.status_code != 429:  # Ignore rate limit errors
-            print(f"Failed to send to Discord: {response.status_code}")
-    except requests.RequestException as e:
-        print(f"An error occurred while sending to Discord: {e}")
+        # Ignore all errors
+    except requests.RequestException:
+        # Handle request exceptions silently
+        pass
 
 # Function to get user ID from username
 def get_user_id(username):
@@ -34,10 +34,10 @@ def get_user_id(username):
         if data and 'data' in data and len(data['data']) > 0:
             user_id = data['data'][0]['id']
             return user_id
-        send_to_discord(f"**Error:** Failed to get user ID for username: {username}.")
+        # No error reporting
         return None
-    except requests.RequestException as e:
-        send_to_discord(f"**Error:** {e}")
+    except requests.RequestException:
+        # Handle request exceptions silently
         return None
 
 # Function to get avatar thumbnail URL
@@ -49,10 +49,10 @@ def get_avatar_thumbnail(user_id):
         data = response.json()
         if 'data' in data and len(data['data']) > 0:
             return data['data'][0]['imageUrl']
-        send_to_discord(f"**Error:** Failed to get avatar thumbnail for user ID: {user_id}.")
+        # No error reporting
         return None
-    except requests.RequestException as e:
-        send_to_discord(f"**Error:** {e}")
+    except requests.RequestException:
+        # Handle request exceptions silently
         return None
 
 # Function to get game servers
@@ -64,8 +64,8 @@ def get_servers(place_id, cursor=None):
         response = requests.get(url)
         response.raise_for_status()
         return response.json()
-    except requests.RequestException as e:
-        send_to_discord(f"**Error:** {e}")
+    except requests.RequestException:
+        # Handle request exceptions silently
         return None
 
 # Function to batch fetch thumbnails
@@ -86,8 +86,8 @@ def fetch_thumbnails(tokens):
         response = requests.post(url, json=body)
         response.raise_for_status()
         return response.json()
-    except requests.RequestException as e:
-        send_to_discord(f"**Error:** {e}")
+    except requests.RequestException:
+        # Handle request exceptions silently
         return None
 
 # Function to search for player
@@ -143,11 +143,10 @@ def get_user_presence(user_ids):
         response = requests.post(url, json=data, headers=headers)
         if response.status_code == 200:
             return response.json().get('userPresences', [])
-        else:
-            send_to_discord(f"**Error:** Failed to retrieve presence data: {response.status_code}")
-            return []
-    except requests.RequestException as e:
-        send_to_discord(f"**Error:** {e}")
+        # No error reporting
+        return []
+    except requests.RequestException:
+        # Handle request exceptions silently
         return []
 
 # Function to get username from user ID
@@ -160,8 +159,8 @@ def get_username(user_id):
             return data.get('name', 'Unknown User')
         else:
             return 'Unknown User'
-    except requests.RequestException as e:
-        send_to_discord(f"**Error:** {e}")
+    except requests.RequestException:
+        # Handle request exceptions silently
         return 'Unknown User'
 
 def main():
@@ -210,7 +209,7 @@ def main():
                     send_to_discord("", embed)
                 previous_state[user_id] = 'Not In-Game'
 
-        time.sleep(15)  # Check every 10 seconds
+        time.sleep(10)  # Check every 10 seconds
 
 if __name__ == "__main__":
     main()
