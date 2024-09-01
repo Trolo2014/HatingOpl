@@ -1,9 +1,8 @@
 import requests
 import time
-import json
 
 WEBHOOK_URL = "https://discord.com/api/webhooks/1116120565955182722/jCrzUqFdd29XD_xMzqIFfgHImP_coEi4TzsQEgCjFXx2F5ReW-xiBR2Q5sbOPf9EPZUm"
-USER_IDS = [3078804436 , 520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs
+USER_IDS = [3078804436, 520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs
 PLACE_ID = "3237168"  # Replace with actual place ID
 PREVIOUS_STATE = {}
 
@@ -76,7 +75,6 @@ def monitor_users():
 
         for presence in presence_data:
             user_id = presence.get('userId')
-            username = presence.get('userName')
             presence_type = presence.get('userPresenceType')
 
             if presence_type == 2:  # User is in-game
