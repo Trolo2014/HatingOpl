@@ -1,6 +1,9 @@
 import requests
 import time
 
+from keep_alive import keep_alive
+keep_alive()
+
 # Discord Webhook URL
 WEBHOOK_URL = "https://discord.com/api/webhooks/1274437598374531234/VaxESeur0SZaSIQzWqH7pmjrZcctBQxLvF-aOSVeypfqKT5w-60CB9-_ruuiKxZYsyJg"
 
