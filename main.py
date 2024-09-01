@@ -187,7 +187,7 @@ def main():
                                 "url": thumbnail_url
                             },
                             "fields": [
-                                {"name": "Username", "value": f"{username} (User ID: {user_id})", "inline": True},
+                                {"name": "Username", "value": f"{username}", "inline": True},
                                 {"name": "Server ID", "value": server_id, "inline": True},
                                 {"name": "DeepLink", "value": f"roblox://experiences/start?placeId={PLACE_ID}&gameInstanceId={server_id}", "inline": False}
                             ]
@@ -204,7 +204,7 @@ def main():
                             "url": thumbnail_url
                         },
                         "fields": [
-                            {"name": "Username", "value": f"{username} (User ID: {user_id})", "inline": False}
+                            {"name": "Username", "value": f"{username}", "inline": False}
                         ]
                     }
                     send_to_discord("", embed)
