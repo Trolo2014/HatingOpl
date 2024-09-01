@@ -3,7 +3,7 @@ import time
 import json
 
 WEBHOOK_URL = "https://discord.com/api/webhooks/1116120565955182722/jCrzUqFdd29XD_xMzqIFfgHImP_coEi4TzsQEgCjFXx2F5ReW-xiBR2Q5sbOPf9EPZUm"
-USER_IDS = [520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs
+USER_IDS = [3078804436 , 520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs
 PLACE_ID = "1234567890"  # Replace with actual place ID
 PREVIOUS_STATE = {}
 
@@ -21,7 +21,7 @@ def get_presence(user_ids):
         print(f"An error occurred while fetching presence data: {e}")
         return []
 
-# Function to get game servers
+# Function to get game servers with retry logic
 def get_servers(place_id, cursor=None, retries=10):
     url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=100"
     if cursor:
@@ -68,35 +68,41 @@ def send_webhook_message(content):
     except requests.RequestException as e:
         print(f"Failed to send message: {e}")
 
-# Main function to monitor users
+# Function to monitor users and send webhook updates
 def monitor_users():
     while True:
         presence_data = get_presence(USER_IDS)
-        
-        update_content = "User Status Updates:\n"
-        
+        in_game_users = []
+
         for presence in presence_data:
             user_id = presence.get('userId')
             username = presence.get('userName')
             presence_type = presence.get('userPresenceType')
 
             if presence_type == 2:  # User is in-game
+                in_game_users.append(user_id)
                 if PREVIOUS_STATE.get(user_id) != 'In-Game':
-                    update_content += f"**{username}** is now in a game. Checking...\n"
-                    job_id = search_player_in_game(user_id, PLACE_ID)
-                    if job_id:
-                        update_content += (
-                            f"**{username}** found in game with PlaceID: {PLACE_ID}\n"
-                            f"DeepLink: roblox://experiences/start?placeId={PLACE_ID}&gameInstanceId={job_id}\n"
-                        )
-                    else:
-                        update_content += f"**{username}** not found in game.\n"
-
-                PREVIOUS_STATE[user_id] = "In-Game" if presence_type == 2 else "Not In-Game"
+                    PREVIOUS_STATE[user_id] = "In-Game"
             else:
                 PREVIOUS_STATE[user_id] = "Not In-Game"
 
-        send_webhook_message(update_content)
+        for user_id in in_game_users:
+            print(f"User {user_id} is in-game. Scanning servers...")
+            job_id = None
+            while not job_id:
+                job_id = search_player_in_game(user_id, PLACE_ID)
+                if job_id:
+                    message = (
+                        f"**User Found!**\n"
+                        f"User ID: {user_id}\n"
+                        f"DeepLink: roblox://experiences/start?placeId={PLACE_ID}&gameInstanceId={job_id}"
+                    )
+                    send_webhook_message(message)
+                    break
+                else:
+                    print(f"User {user_id} not found in any server. Retrying...")
+                    time.sleep(15)  # Retry after 15 seconds
+
         time.sleep(30)  # Check every 30 seconds
 
 # Run the monitoring function
