@@ -209,7 +209,7 @@ def main():
                     send_to_discord("", embed)
                 previous_state[user_id] = 'Not In-Game'
 
-        time.sleep(10)  # Check every 10 seconds
+        time.sleep(15)  # Check every 10 seconds
 
 if __name__ == "__main__":
     main()
