@@ -1,26 +1,104 @@
 import requests
 import time
 
-WEBHOOK_URL = "https://discord.com/api/webhooks/1116120565955182722/jCrzUqFdd29XD_xMzqIFfgHImP_coEi4TzsQEgCjFXx2F5ReW-xiBR2Q5sbOPf9EPZUm"
-USER_IDS = [3078804436, 520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs
-PLACE_ID = "3237168"  # Replace with actual place ID
-PREVIOUS_STATE = {}
+from keep_alive import keep_alive
+keep_alive()
 
-# Function to get presence data
+WEBHOOK_URL = "https://discord.com/api/webhooks/1116120565955182722/jCrzUqFdd29XD_xMzqIFfgHImP_coEi4TzsQEgCjFXx2F5ReW-xiBR2Q5sbOPf9EPZUm"
+PLACE_ID = "3237168"  # Replace with the actual place ID
+
+# Store previous state
+previous_state = {}
+
+def get_username(user_id):
+    url = f"https://users.roblox.com/v1/users/{user_id}"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('name', 'Unknown User')
+        else:
+            return 'Unknown User'
+    except requests.RequestException as e:
+        print(f"An error occurred while fetching username: {e}")
+        return 'Unknown User'
+
+def send_to_discord(message):
+    data = {
+        "content": message
+    }
+    try:
+        response = requests.post(WEBHOOK_URL, json=data)
+        if response.status_code == 204:
+            print("Successfully sent to Discord.")
+        else:
+            print(f"Failed to send to Discord: {response.status_code}")
+    except requests.RequestException as e:
+        print(f"An error occurred while sending to Discord: {e}")
+
 def get_presence(user_ids):
     url = "https://presence.roblox.com/v1/presence/users"
-    headers = {"Content-Type": "application/json"}
-    data = {"userIds": user_ids}
-    
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = {
+        "userIds": user_ids
+    }
     try:
         response = requests.post(url, json=data, headers=headers)
-        response.raise_for_status()
-        return response.json().get('userPresences', [])
+        if response.status_code == 200:
+            presence_data = response.json()
+            for presence in presence_data.get('userPresences', []):
+                user_id = presence.get('userId', 'N/A')
+                username = get_username(user_id)
+                presence_type = presence.get('userPresenceType', 'N/A')
+
+                presence_type_text = {
+                    0: "Offline",
+                    1: "Online",
+                    2: "In-Game",
+                    3: "In-Studio"
+                }.get(presence_type, "Unknown")
+
+                if presence_type == 2:  # If user is in-game
+                    if user_id in previous_state and previous_state[user_id] != 'In-Game':
+                        # User state changed to in-game
+                        message = (
+                            f"**Username:** {username} (User ID: {user_id})\n"
+                            f"**Is now** {presence_type_text}\n"
+                        )
+                        send_to_discord(message)
+                    
+                    # Update previous state
+                    previous_state[user_id] = 'In-Game'
+                    
+                    # Now search for the user in the game
+                    print(f"User {user_id} is in-game. Scanning servers...")
+                    server_id = search_player_in_game(user_id, PLACE_ID)
+                    if server_id:
+                        message = (
+                            f"**User Found in Game!**\n"
+                            f"**Username:** {username} (User ID: {user_id})\n"
+                            f"**Server ID:** {server_id}\n"
+                            f"**DeepLink:** roblox://experiences/start?placeId={PLACE_ID}&gameInstanceId={server_id}"
+                        )
+                        send_to_discord(message)
+                else:
+                    # If the user was previously in-game and now they are not
+                    if user_id in previous_state and previous_state[user_id] == 'In-Game':
+                        message = (
+                            f"**Username:** {username} (User ID: {user_id})\n"
+                            f"**Has left the game.**\n"
+                        )
+                        send_to_discord(message)
+
+                    # Update previous state
+                    previous_state[user_id] = 'Not In-Game'
+        else:
+            print(f"Failed to retrieve presence data: {response.status_code}")
     except requests.RequestException as e:
         print(f"An error occurred while fetching presence data: {e}")
-        return []
 
-# Function to get game servers with retry logic
 def get_servers(place_id, cursor=None, retries=10):
     url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=100"
     if cursor:
@@ -35,7 +113,6 @@ def get_servers(place_id, cursor=None, retries=10):
             time.sleep(2.5)
     return None
 
-# Function to search for a player in a specific game
 def search_player_in_game(user_id, place_id):
     cursor = None
     while True:
@@ -47,70 +124,19 @@ def search_player_in_game(user_id, place_id):
         cursor = servers.get("nextPageCursor")
 
         for server in servers.get("data", []):
-            # Debugging: Print server data to understand its structure
-            print(f"Server data: {server}")
-
-            # Check if the 'playing' key exists and is a list
-            playing_users = server.get("playing", [])
-            if isinstance(playing_users, list):
-                if user_id in playing_users:
-                    return server.get("id")
-            else:
-                print(f"Unexpected data format for 'playing': {playing_users}")
+            # We need to check if the server data includes player info
+            playing = server.get("playing", [])
+            if isinstance(playing, list) and user_id in playing:
+                return server.get("id")
 
         if not cursor:
             break
 
     return None
 
-# Function to send a message using webhook
-def send_webhook_message(content):
-    data = {
-        "content": content
-    }
-    try:
-        response = requests.post(WEBHOOK_URL, json=data)
-        response.raise_for_status()
-        print("Message sent successfully.")
-    except requests.RequestException as e:
-        print(f"Failed to send message: {e}")
-
-# Function to monitor users and send webhook updates
-def monitor_users():
-    while True:
-        presence_data = get_presence(USER_IDS)
-        in_game_users = []
-
-        for presence in presence_data:
-            user_id = presence.get('userId')
-            presence_type = presence.get('userPresenceType')
-
-            if presence_type == 2:  # User is in-game
-                in_game_users.append(user_id)
-                if PREVIOUS_STATE.get(user_id) != 'In-Game':
-                    PREVIOUS_STATE[user_id] = "In-Game"
-            else:
-                PREVIOUS_STATE[user_id] = "Not In-Game"
-
-        for user_id in in_game_users:
-            print(f"User {user_id} is in-game. Scanning servers...")
-            job_id = None
-            while not job_id:
-                job_id = search_player_in_game(user_id, PLACE_ID)
-                if job_id:
-                    message = (
-                        f"**User Found!**\n"
-                        f"User ID: {user_id}\n"
-                        f"DeepLink: roblox://experiences/start?placeId={PLACE_ID}&gameInstanceId={job_id}"
-                    )
-                    send_webhook_message(message)
-                    break
-                else:
-                    print(f"User {user_id} not found in any server. Retrying...")
-                    time.sleep(15)  # Retry after 15 seconds
-
-        time.sleep(30)  # Check every 30 seconds
-
-# Run the monitoring function
+# Example call
 if __name__ == "__main__":
-    monitor_users()
+    user_ids = [3078804436,520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs as needed
+    while True:
+        get_presence(user_ids)
+        time.sleep(30)  # Check every 30 seconds
