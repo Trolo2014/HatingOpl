@@ -18,7 +18,7 @@ def send_to_discord(content, embed=None):
         response = requests.post(WEBHOOK_URL, json=data)
         if response.status_code == 204:
             print("Successfully sent to Discord.")
-        else:
+        elif response.status_code != 429:  # Ignore rate limit errors
             print(f"Failed to send to Discord: {response.status_code}")
     except requests.RequestException as e:
         print(f"An error occurred while sending to Discord: {e}")
