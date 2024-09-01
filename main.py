@@ -128,7 +128,7 @@ async def get_presence(user_ids):
 
 # Example call
 if __name__ == "__main__":
-    user_ids = [520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs as needed
+    user_ids = [3078804436,520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs as needed
     while True:
         asyncio.run(get_presence(user_ids))
         time.sleep(30)  # Check every 30 seconds
