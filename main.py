@@ -10,6 +10,43 @@ PLACE_ID = "3237168"  # Replace with the actual place ID
 # Store previous state
 previous_state = {}
 
+
+def get_servers(place_id, cursor=None, retries=10):
+    url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=100"
+    if cursor:
+        url += f"&cursor={cursor}"
+    for attempt in range(retries):
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            time.sleep(2.5)
+    return None
+
+def search_player_in_game(user_id, place_id):
+    cursor = None
+    while True:
+        servers = get_servers(place_id, cursor)
+        if not servers:
+            print("Failed to retrieve servers.")
+            return None
+        
+        cursor = servers.get("nextPageCursor")
+
+        for server in servers.get("data", []):
+            # We need to check if the server data includes player info
+            playing = server.get("playing", [])
+            if isinstance(playing, list) and user_id in playing:
+                return server.get("id")
+
+        if not cursor:
+            break
+
+    return None
+
+
 def get_username(user_id):
     url = f"https://users.roblox.com/v1/users/{user_id}"
     try:
@@ -99,40 +136,6 @@ def get_presence(user_ids):
     except requests.RequestException as e:
         print(f"An error occurred while fetching presence data: {e}")
 
-def get_servers(place_id, cursor=None, retries=10):
-    url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=100"
-    if cursor:
-        url += f"&cursor={cursor}"
-    for attempt in range(retries):
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            return response.json()
-        except requests.RequestException as e:
-            print(f"Attempt {attempt + 1} failed: {e}")
-            time.sleep(2.5)
-    return None
-
-def search_player_in_game(user_id, place_id):
-    cursor = None
-    while True:
-        servers = get_servers(place_id, cursor)
-        if not servers:
-            print("Failed to retrieve servers.")
-            return None
-        
-        cursor = servers.get("nextPageCursor")
-
-        for server in servers.get("data", []):
-            # We need to check if the server data includes player info
-            playing = server.get("playing", [])
-            if isinstance(playing, list) and user_id in playing:
-                return server.get("id")
-
-        if not cursor:
-            break
-
-    return None
 
 # Example call
 if __name__ == "__main__":
