@@ -47,8 +47,16 @@ def search_player_in_game(user_id, place_id):
         cursor = servers.get("nextPageCursor")
 
         for server in servers.get("data", []):
-            if user_id in server.get("playing", []):
-                return server.get("id")
+            # Debugging: Print server data to understand its structure
+            print(f"Server data: {server}")
+
+            # Check if the 'playing' key exists and is a list
+            playing_users = server.get("playing", [])
+            if isinstance(playing_users, list):
+                if user_id in playing_users:
+                    return server.get("id")
+            else:
+                print(f"Unexpected data format for 'playing': {playing_users}")
 
         if not cursor:
             break
