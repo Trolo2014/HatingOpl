@@ -167,7 +167,7 @@ def get_username(user_id):
         return 'Unknown User'
 
 def main():
-    user_ids = [520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs
+    user_ids = [29860360 , 520944, 43247021, 137621, 1135910299, 295337577, 2350183594]  # Replace with actual user IDs
 
     while True:
         # Request presence for all user IDs
